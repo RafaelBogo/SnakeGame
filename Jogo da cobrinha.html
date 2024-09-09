@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Cobrinha</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #222;
+        }
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+        .score {
+            color: white;
+            font-size: 1.5rem;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <canvas id="game" width="400" height="400"></canvas>
+        <div class="score">Pontuação: <span id="score">0</span></div>
+    </div>
+    <script>
+        const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const tamanho = 20;
+let snake = [{ x: canvas.width / 2, y: canvas.height / 2 }];
+let dx = tamanho;
+let dy = 0;
+let score = 0;
+let speed = 200;
+
+function posicaoValida(x, y) {
+    for (const part of snake) {
+        if (part.x === x && part.y === y) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function novaComida() {
+    let x, y;
+    do {
+        x = Math.floor(Math.random() * (canvas.width / tamanho)) * tamanho;
+        y = Math.floor(Math.random() * (canvas.height / tamanho)) * tamanho;
+    } while (!posicaoValida(x, y));
+
+    return { x, y };
+}
+
+let food = novaComida();
+
+document.addEventListener('keydown', mudarDirecao);
+
+function loop() {
+    if (colisaoParede() || colisaoCobra()) {
+        reset();
+        return;
+    }
+
+    moverCobra();
+
+    if (comeuComida()) {
+        adicionarParteCobra();
+        food = novaComida();
+        score += 10;
+        document.getElementById('score').textContent = score;
+
+        if (speed > 50) {
+            speed -= 5;
+        }
+    }
+
+    desenhar();
+
+    setTimeout(loop, speed);
+}
+
+loop();
+
+function desenhar() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'lime';
+    for (const part of snake) {
+        ctx.fillRect(part.x, part.y, tamanho, tamanho);
+    }
+
+    ctx.fillStyle = 'red';
+    ctx.fillRect(food.x, food.y, tamanho, tamanho);
+}
+
+function moverCobra() {
+    for (let i = snake.length - 1; i > 0; i--) {
+        snake[i] = { ...snake[i - 1] };
+    }
+
+    snake[0].x += dx;
+    snake[0].y += dy;
+}
+
+function colisaoParede() {
+    return (
+        snake[0].x < 0 ||
+        snake[0].x >= canvas.width ||
+        snake[0].y < 0 ||
+        snake[0].y >= canvas.height
+    );
+}
+
+function colisaoCobra() {
+    for (let i = 1; i < snake.length; i++) {
+        if (snake[0].x === snake[i].x && snake[0].y === snake[i].y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function comeuComida() {
+    return snake[0].x === food.x && snake[0].y === food.y;
+}
+
+function adicionarParteCobra() {
+    const lastPart = snake[snake.length - 1];
+    const newPart = { ...lastPart };
+    
+    if (dx > 0) {
+        newPart.x -= tamanho;
+    } else if (dx < 0) {
+        newPart.x += tamanho;
+    } else if (dy > 0) {
+        newPart.y -= tamanho;
+    } else if (dy < 0) {
+        newPart.y += tamanho;
+    }
+    
+    snake.push(newPart);
+}
+
+function mudarDirecao(e) {
+    if (e.key === 'ArrowUp' && dy === 0) {
+        dx = 0;
+        dy = -tamanho;
+    } else if (e.key === 'ArrowDown' && dy === 0) {
+        dx = 0;
+        dy = tamanho;
+    } else if (e.key === 'ArrowLeft' && dx === 0) {
+        dx = -tamanho;
+        dy = 0;
+    } else if (e.key === 'ArrowRight' && dx === 0) {
+        dx = tamanho;
+        dy = 0;
+    }
+}
+
+function reset() {
+    snake = [{ x: canvas.width / 2, y: canvas.height / 2 }];
+    food = novaComida();
+    dx = tamanho;
+    dy = 0;
+    score = 0;
+    speed = 200;
+    document.getElementById('score').textContent = score;
+}
+
+
+    </script>
+</body>
+</html>    
